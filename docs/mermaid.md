@@ -22,6 +22,7 @@ It reads `flowchart` and `graph` in any direction, nodes of any bracket shape, c
 - Each top-level `subgraph` … `end` becomes a shaded group.
 - A class named after a state sets that state: `A:::building` or `class A,B planned`. The states are live, building, trial, planned and retiring.
 - A `title:` in the front matter. Without one the title is “Flowchart”, and `--title` sets it.
+- Mermaid's `curve` setting. `step`, `stepBefore` and `stepAfter` draw right-angle lines; any other curve draws smooth curves. It is read from the front matter (`config:` › `flowchart:` › `curve: step`) or from a `%%{init: {"flowchart": {"curve": "step"}}}%%` line. From Python, `from_mermaid(text, routing="orthogonal")` does the same.
 - `%%` comments, and `;` between statements.
 
 ## What changes

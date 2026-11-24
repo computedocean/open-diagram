@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from . import catalog
 from .blocks import Card, Graph, Note, Panel, Resource, Row, Text, Tile, Tiles
-from .diagram import Diagram
+from .diagram import ROUTINGS, Diagram
 from .theme import Status, Theme
 
 
@@ -30,14 +30,14 @@ class SpecError(ValueError):
 
 TOP_KEYS = {"title", "subtitle", "tag", "note", "steps", "steps_label", "legend", "theme", "columns", "panels", "ring",
             "center", "gap", "row_gap", "valign", "start_angle", "groups", "links", "statuses", "resources",
-            "enclosures"}
+            "enclosures", "routing"}
 LAYOUTS = ("columns", "panels", "ring")
 PANEL_KEYS = {"id", "title", "sub", "status", "step", "footer", "tone", "width", "tiles", "cols", "label", "sections",
               "x", "y"}
 TILE_KEYS = {"label", "sub", "status", "icon"}
 RESOURCE_KEYS = {"id", "label", "sub", "icon", "icon_size", "max_width", "border", "x", "y"}
 ENCLOSURE_KEYS = {"id", "label", "members", "sub", "pad", "border", "fill", "stroke", "style", "tone"}
-LINK_KEYS = {"from", "to", "kind", "label", "start", "end", "lane", "via_x", "via_y", "cross_ok", "dash"}
+LINK_KEYS = {"from", "to", "kind", "label", "start", "end", "lane", "via_x", "via_y", "cross_ok", "dash", "routing"}
 GROUP_KEYS = {"label", "members", "sub"}
 
 
@@ -222,9 +222,14 @@ def from_spec(spec: Dict[str, Any], icons: Optional[Sequence[str]] = None) -> Di
         n = spec["note"]
         _keys(n, {"title", "lines"}, "note", ("title",))
         note = Note(n["title"], *n.get("lines", []))
+    routing = spec.get("routing", "curved")
+    if routing not in ROUTINGS:
+        raise SpecError(f"routing: use 'curved' or 'orthogonal' (straight runs that meet at right angles), "
+                        f"not {routing!r}")
     d = Diagram(spec["title"], subtitle=spec.get("subtitle"), tag=spec.get("tag"), note=note,
                 theme=theme_from_spec(spec.get("theme")), legend=spec.get("legend", True),
-                steps=[tuple(s) for s in spec.get("steps", [])], steps_label=spec.get("steps_label", "Steps"))
+                steps=[tuple(s) for s in spec.get("steps", [])], steps_label=spec.get("steps_label", "Steps"),
+                routing=routing)
     if "center" in spec and layout != "ring":
         raise SpecError("center: only works with the 'ring' layout")
 
@@ -329,7 +334,8 @@ def from_spec(spec: Dict[str, Any], icons: Optional[Sequence[str]] = None) -> Di
             start, end = link.get("start", lane), link.get("end", lane)
         try:
             d.link(a, b, kind=link.get("kind", "flow"), label=link.get("label"), start=start, end=end,
-                   via_x=link.get("via_x"), via_y=via_y, cross_ok=link.get("cross_ok", False), dash=link.get("dash"))
+                   via_x=link.get("via_x"), via_y=via_y, cross_ok=link.get("cross_ok", False), dash=link.get("dash"),
+                   routing=link.get("routing"))
         except (TypeError, ValueError) as e:
             raise SpecError(f"{where}: {e}") from None
     if spec.get("statuses"):

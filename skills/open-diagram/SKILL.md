@@ -22,7 +22,7 @@ Write the plan in a few lines first. Use only facts the user gave. Never invent 
 - **Panels.** One panel per system or team, titled in two to four words. Add a `sub` line only when it adds a fact.
 - **Tiles.** Up to about nine per panel, labels of four words or fewer. Put detail in `sub`.
 - **Statuses.** Only if the user cares about state: `live`, `building`, `trial`, `planned`, `retiring`.
-- **Lines.** Only the flows that matter. `kind="planned"` for connections still to build. A line that must jump past a column goes through a lane (`"lane": "top"` in JSON, `via_y` in Python).
+- **Lines.** Only the flows that matter. `kind="planned"` for connections still to build. A line that must jump past a column goes through a lane (`"lane": "top"` in JSON, `via_y` in Python). Lines are curved by default; when the user asks for straight, square or right-angle lines, set `"routing": "orthogonal"` (JSON) or `Diagram(..., routing="orthogonal")` (Python).
 - **Extras.** Steps, owners (`footer="Owner: ..."`), groups and a `Note` only when the user's material supports them.
 
 ## 3. Write it
@@ -38,7 +38,7 @@ Write the plan in a few lines first. Use only facts the user gave. Never invent 
            {"from": "web", "to": "ops", "lane": "top", "kind": "planned", "label": "direct"}]}
 ```
 
-Top-level keys: `title` (required); one layout of `columns`, `ring` (with optional `center`, `start_angle`) or `panels`; plus `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`. Panel keys: `title` (required), `id`, `sub`, `status`, `step`, `footer`, `tone`, `width`, `x`/`y` (in `panels` only), `tiles` with `cols` and `label`, or `sections`. Link keys: `from`, `to`, `kind`, `label`, `start`, `end` (a side or `auto`), `lane`, `via_x`, `via_y`, `cross_ok`, `dash` (`solid`, `dashed` or `dotted`).
+Top-level keys: `title` (required); one layout of `columns`, `ring` (with optional `center`, `start_angle`) or `panels`; plus `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`, `routing` (`curved` or `orthogonal`). Panel keys: `title` (required), `id`, `sub`, `status`, `step`, `footer`, `tone`, `width`, `x`/`y` (in `panels` only), `tiles` with `cols` and `label`, or `sections`. Link keys: `from`, `to`, `kind`, `label`, `start`, `end` (a side or `auto`), `lane`, `via_x`, `via_y`, `cross_ok`, `dash` (`solid`, `dashed` or `dotted`), `routing`.
 
 **Python** (keep all words in lists at the top; build in a `build()` that returns the `Diagram`):
 

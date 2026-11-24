@@ -6,6 +6,7 @@ The SVG and PNG are still written, so whoever is fixing the layout (a person or 
 """
 from __future__ import annotations
 
+import itertools
 import math
 import os
 from collections import defaultdict
@@ -22,6 +23,8 @@ SIDES = {"left": (-1.0, 0.0), "right": (1.0, 0.0), "top": (0.0, -1.0), "bottom":
 ARROW = 7.0
 STUB = 16.0
 CORNER = 10.0
+TRACK = 12.0
+ROUTINGS = ("curved", "orthogonal")
 Point = Tuple[float, float]
 
 
@@ -87,6 +90,9 @@ class Link:
     want_end: str = ""
     start_pt: Point = (0.0, 0.0)
     dash: Optional[str] = None
+    routing: Optional[str] = None
+    points: List[Point] = field(default_factory=list)
+    track: Optional[Tuple[int, float, float]] = None
 
 
 @dataclass
@@ -119,11 +125,16 @@ class Diagram:
     """A whole picture: a header (title, tag, subtitle, key, note) above blocks, lines and groups.
 
     Positions are in pixels. Place blocks anywhere; the canvas grows to fit them, and the header is added above.
+    routing: 'curved' (the default) or 'orthogonal', which draws every line as straight runs that meet at right
+    angles. link(routing=...) sets it for one line.
     """
 
     def __init__(self, title: str, subtitle: Optional[str] = None, tag: Optional[str] = None,
                  note: Optional[Note] = None, theme: Optional[Theme] = None, legend: bool = True,
-                 steps: Sequence[Tuple[int, str]] = (), steps_label: str = "Steps"):
+                 steps: Sequence[Tuple[int, str]] = (), steps_label: str = "Steps", routing: str = "curved"):
+        if routing not in ROUTINGS:
+            raise ValueError(f"unknown routing {routing!r}; use curved or orthogonal")
+        self.routing = routing
         self.title, self.subtitle, self.tag, self.note = title, subtitle, tag, note
         self.theme = theme or Theme()
         self.legend = legend
@@ -289,7 +300,7 @@ class Diagram:
 
     def link(self, a: Placed, b: Placed, kind: str = "flow", label: Optional[str] = None, start: str = "right",
              end: str = "left", via_x: Optional[float] = None, via_y: Optional[float] = None,
-             cross_ok: bool = False, dash: Optional[str] = None) -> Link:
+             cross_ok: bool = False, dash: Optional[str] = None, routing: Optional[str] = None) -> Link:
         """Join two placed blocks with an arrow from a to b.
 
         kind: 'flow' (solid: data moves today) or 'planned' (dotted: a connection still to build).
@@ -299,6 +310,8 @@ class Diagram:
             for the side that faces the other block.
         via_x / via_y: route the line with right angles through that x or y, for example a lane above everything.
         cross_ok: allow the line to pass behind other blocks without reporting it.
+        routing: 'curved' or 'orthogonal' (straight runs meeting at right angles) for this line; None uses the
+            diagram's routing. A line with via_x or via_y always has right angles.
         """
         for p in (a, b):
             if not isinstance(p, Placed):
@@ -312,8 +325,10 @@ class Diagram:
             raise ValueError("link dash must be solid, dashed, dotted or None")
         if via_x is not None and via_y is not None:
             raise ValueError("give via_x or via_y, not both")
+        if routing is not None and routing not in ROUTINGS:
+            raise ValueError(f"unknown routing {routing!r}; use curved or orthogonal")
         line = Link(a, b, kind, label, start, end, via_x, via_y, cross_ok,
-                    want_start=start, want_end=end, dash=dash)
+                    want_start=start, want_end=end, dash=dash, routing=routing)
         self.links.append(line)
         return line
 
@@ -326,6 +341,7 @@ class Diagram:
                 line.start = _facing(line.a, line.b) if line.want_start == "auto" else line.want_start
                 line.end = _facing(line.b, line.a) if line.want_end == "auto" else line.want_end
         ends: Dict[Tuple[int, str], List[Tuple[Link, int]]] = defaultdict(list)
+        alone: Dict[Tuple[int, int], bool] = {}
         for line in self.links:
             ends[(id(line.a), line.start)].append((line, 0))
             ends[(id(line.b), line.end)].append((line, 1))
@@ -347,9 +363,98 @@ class Diagram:
             mid = (lo + hi) / 2
             for i, (line, e) in enumerate(items):
                 line.offsets[e] = mid + (i - (n - 1) / 2) * step
+                alone[(id(line), e)] = n == 1
+        for line in self.links:
+            if self._square(line):
+                self._straighten(line, alone[(id(line), 0)], alone[(id(line), 1)])
         for line in self.links:
             self._shape(line)
+        self._spread()
         self._place_labels()
+
+    def _square(self, line: Link) -> bool:
+        """True for a line drawn with right angles that the diagram routes itself (no via_x or via_y)."""
+        return line.via_x is None and line.via_y is None and (line.routing or self.routing) == "orthogonal"
+
+    def _straighten(self, line: Link, free_a: bool, free_b: bool) -> None:
+        """When two blocks face each other and share a stretch of their facing sides, move the line's ends level so
+        it runs straight. Only an end that no other line uses on that side moves."""
+        if not (free_a or free_b):
+            return
+        d0, d3 = SIDES[line.start], SIDES[line.end]
+        if d0 != (-d3[0], -d3[1]):
+            return
+        a, b, t = line.a, line.b, self.theme
+        k = 0 if d0[0] else 1
+        if (_edge(b, line.end) - _edge(a, line.start)) * d0[k] <= 0:
+            return
+        base_a, base_b = (a.y, b.y) if k == 0 else (a.x, b.x)
+        at_a, at_b = base_a + line.offsets[0], base_b + line.offsets[1]
+        lo_a, hi_a = a.block.ports(line.start, a.w, a.h, t) if free_a else (line.offsets[0], line.offsets[0])
+        lo_b, hi_b = b.block.ports(line.end, b.w, b.h, t) if free_b else (line.offsets[1], line.offsets[1])
+        lo, hi = max(base_a + lo_a, base_b + lo_b), min(base_a + hi_a, base_b + hi_b)
+        if lo > hi:
+            return
+        level = min(max((at_a + at_b) / 2, lo), hi)
+        line.offsets[0], line.offsets[1] = level - base_a, level - base_b
+
+    def _spread(self) -> None:
+        """Right-angle lines whose middle runs fall in the same gap would draw on top of each other. Give each its
+        own track, a few pixels apart, in the order that makes the fewest crossings."""
+        for k in (0, 1):
+            runs = sorted((l for l in self.links if l.track is not None and l.track[0] == k),
+                          key=lambda l: l.points[1][k])
+            clusters: List[List[Link]] = []
+            for line in runs:
+                if clusters and line.points[1][k] - clusters[-1][-1].points[1][k] < TRACK:
+                    clusters[-1].append(line)
+                else:
+                    clusters.append([line])
+            for cluster in clusters:
+                j = 1 - k
+                spans = sorted(cluster, key=lambda l: min(l.points[1][j], l.points[2][j]))
+                parts: List[List[Link]] = []
+                reach = -math.inf
+                for line in spans:
+                    lo, hi = sorted((line.points[1][j], line.points[2][j]))
+                    if parts and lo < reach + 2:
+                        parts[-1].append(line)
+                        reach = max(reach, hi)
+                    else:
+                        parts.append([line])
+                        reach = hi
+                for part in parts:
+                    if len(part) > 1:
+                        self._tracks(part, k)
+
+    def _tracks(self, part: List[Link], k: int) -> None:
+        n = len(part)
+        lo = max(l.track[1] for l in part)
+        hi = min(l.track[2] for l in part)
+        centre = sum(l.points[1][k] for l in part) / n
+        if lo > hi:
+            lo = hi = centre
+        step = max(min(TRACK, (hi - lo) / (n - 1)), 4.0)
+        half = step * (n - 1) / 2
+        centre = min(max(centre, lo + half), hi - half) if hi - lo >= 2 * half else (lo + hi) / 2
+        travel = SIDES[part[0].start][k] or 1.0
+        spots = sorted((centre + (i - (n - 1) / 2) * step for i in range(n)), key=lambda v: v * travel)
+        j = 1 - k
+
+        def order_key(line):
+            rising = (line.points[2][j] - line.points[1][j]) < 0
+            return (0, line.points[0][j]) if rising else (1, -line.points[0][j])
+
+        first = sorted(part, key=order_key)
+        orders = itertools.permutations(first) if n <= 6 else [tuple(first)]
+        best, best_cost = None, math.inf
+        for order in orders:
+            paths = [_with_track(line.points, k, spot) for line, spot in zip(order, spots)]
+            cost = sum(_crossings(paths[i], paths[m]) for i in range(n) for m in range(i + 1, n))
+            if cost < best_cost:
+                best, best_cost = list(zip(order, paths)), cost
+        for line, pts in best:
+            self._set_points(line, _simplify(pts), line.track)
 
     def _place_labels(self) -> None:
         """Slide each line label along its line to the first spot clear of blocks, group titles, other lines and
@@ -379,6 +484,11 @@ class Diagram:
         d3 = SIDES[line.end]
         p3 = (tip[0] + d3[0] * ARROW, tip[1] + d3[1] * ARROW)
         line.tip, line.direction = tip, (-d3[0], -d3[1])
+        line.track = None
+        if self._square(line):
+            pts, track = _elbow(line, p0, p3)
+            self._set_points(line, pts, track)
+            return
         if line.via_x is None and line.via_y is None:
             along = abs(p3[0] - p0[0]) if line.start in ("left", "right") else abs(p3[1] - p0[1])
             k = max(28.0, along * 0.5)
@@ -395,7 +505,11 @@ class Diagram:
             middle = [(s0[0], line.via_y), (s3[0], line.via_y)]
         else:
             middle = [(line.via_x, s0[1]), (line.via_x, s3[1])]
-        pts = _simplify([p0, s0] + middle + [s3, p3])
+        self._set_points(line, _simplify([p0, s0] + middle + [s3, p3]))
+
+    def _set_points(self, line: Link, pts: List[Point], track: Optional[Tuple[int, float, float]] = None) -> None:
+        """Draw a line through right-angle corners, and list the spots its label may take, longest runs first."""
+        line.points, line.track = pts, track
         line.d = _rounded(pts, CORNER)
         line.samples = _sample(pts, 5.0)
         order = sorted(range(len(pts) - 1), key=lambda i: -math.dist(pts[i], pts[i + 1]))
@@ -767,10 +881,78 @@ def _link_dash(line: Link) -> Optional[str]:
     return None if line.dash == "solid" else line.dash
 
 
+def _elbow(line: Link, p0: Point, p3: Point) -> Tuple[List[Point], Optional[Tuple[int, float, float]]]:
+    """Horizontal and vertical runs from p0, leaving along the start side, to p3, arriving against the end side.
+
+    Also returns, for a path whose one middle run joins two ends facing each other, (axis, low, high): that run sits
+    at a point along the axis (0 is x, 1 is y) and may slide between low and high."""
+    d0, d3 = SIDES[line.start], SIDES[line.end]
+    s0 = _outside(line.a, p0, line.start, STUB)
+    s3 = _outside(line.b, p3, line.end, STUB)
+    k = 0 if d0[0] else 1
+    j = 1 - k
+
+    def at(along: float, across: float) -> Point:
+        return (along, across) if k == 0 else (across, along)
+
+    if (d3[0] != 0) == (d0[0] != 0):
+        if d0 == d3:
+            far = max(s0[k] * d0[k], s3[k] * d0[k]) * d0[k]
+            return _simplify([p0, at(far, p0[j]), at(far, p3[j]), p3]), None
+        if (p3[k] - p0[k]) * d0[k] > 0:
+            if abs(p0[j] - p3[j]) < 0.5:
+                return [p0, p3], None
+            if (s3[k] - s0[k]) * d0[k] >= 0:
+                lo, hi = sorted((s0[k], s3[k]))
+            else:
+                lo = hi = (p0[k] + p3[k]) / 2
+            mid = (lo + hi) / 2
+            pts = _simplify([p0, at(mid, p0[j]), at(mid, p3[j]), p3])
+            return pts, ((k, lo, hi) if len(pts) == 4 else None)
+        mid = (p0[j] + p3[j]) / 2
+        return _simplify([p0, s0, at(s0[k], mid), at(s3[k], mid), s3, p3]), None
+    corner = at(p3[k], p0[j])
+    if (corner[k] - s0[k]) * d0[k] >= 0 and (corner[j] - s3[j]) * d3[j] >= 0:
+        return [p0, corner, p3], None
+    return _simplify([p0, s0, at(s0[k], s3[j]), s3, p3]), None
+
+
+def _with_track(pts: List[Point], k: int, spot: float) -> List[Point]:
+    """The same path with its middle run moved to `spot` along axis k."""
+    out = list(pts)
+    for i in (1, 2):
+        out[i] = (spot, out[i][1]) if k == 0 else (out[i][0], spot)
+    return out
+
+
+def _crossings(p: List[Point], q: List[Point]) -> int:
+    """How often two right-angle paths cross; a stretch where they run along each other counts double."""
+    return sum(_meets(a, b, c, d) for a, b in zip(p, p[1:]) for c, d in zip(q, q[1:]))
+
+
+def _meets(a: Point, b: Point, c: Point, d: Point) -> int:
+    flat1, flat2 = abs(a[1] - b[1]) < 0.01, abs(c[1] - d[1]) < 0.01
+    if flat1 == flat2:
+        k = 0 if flat1 else 1
+        if abs(a[1 - k] - c[1 - k]) > 0.5:
+            return 0
+        lo = max(min(a[k], b[k]), min(c[k], d[k]))
+        hi = min(max(a[k], b[k]), max(c[k], d[k]))
+        return 2 if hi - lo > 1 else 0
+    if not flat1:
+        a, b, c, d = c, d, a, b
+    x, y = c[0], a[1]
+    return int(min(a[0], b[0]) + 0.5 < x < max(a[0], b[0]) - 0.5 and min(c[1], d[1]) + 0.5 < y < max(c[1], d[1]) - 0.5)
+
+
+def _edge(p: Placed, side: str) -> float:
+    return {"left": p.x, "right": p.right, "top": p.y, "bottom": p.bottom}[side]
+
+
 def _outside(p: Placed, point: Point, side: str, minimum: float) -> Point:
     """Leave the full measured box before turning, even when attached to an inset resource icon."""
     dx, dy = SIDES[side]
-    edge = {"left": p.x, "right": p.right, "top": p.y, "bottom": p.bottom}[side]
+    edge = _edge(p, side)
     inset = (edge - point[0]) * dx if dx else (edge - point[1]) * dy
     distance = max(minimum, inset + STUB)
     return point[0] + dx * distance, point[1] + dy * distance

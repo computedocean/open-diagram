@@ -4,7 +4,9 @@ Supported: `flowchart` or `graph` with LR, RL, TD, TB or BT; nodes with any brac
 `A{Text}`, `A((Text))`, quoted text); chains (`A --> B --> C`) and `&`; edge labels (`-->|text|`, `-- text -->`);
 dotted edges (`-.->`), which become planned connections; top-level `subgraph ... end`, which become groups;
 `class A,B name` and `A:::name`, where a class named like a state (live, building, trial, planned, retiring)
-sets that state; and a `title:` in front matter. Styling lines (`classDef`, `style`, `linkStyle`, `click`) are ignored.
+sets that state; a `title:` in front matter; and Mermaid's `curve` setting, where `step`, `stepBefore` and
+`stepAfter` (in front matter or a `%%{init: ...}%%` line) draw right-angle lines. Styling lines (`classDef`, `style`,
+`linkStyle`, `click`) are ignored.
 
 Layout: nodes go in layers by longest path, each subgraph gets its own band so groups never overlap other nodes,
 and lines that skip a layer or point backwards travel in a corridor above or below the picture.
@@ -29,6 +31,7 @@ _SHAPES = [("((", "))"), ("([", "])"), ("[[", "]]"), ("[(", ")]"), ("{{", "}}"),
            ("[/", "\\]"), ("[\\", "/]"), ("[", "]"), ("(", ")"), ("{", "}"), (">", "]")]
 _ID = re.compile(r"^([A-Za-z0-9_][\w.-]*)")
 _EDGE = re.compile(r"\s*(<?(?:-\.+->|-\.+-|={2,}>|={3,}|-{2,}>|-{3,}|--[ox]))\s*(?:\|([^|]*)\|)?\s*")
+_CURVE = re.compile(r"""curve['"]?\s*:\s*['"]?([A-Za-z]+)""")
 _LABELED = [(re.compile(r"(?<![-.=<])--\s+([^-|>][^|]*?)\s+(-->|---)"), r"\2|\1|"),
             (re.compile(r"-\.\s+([^.|][^|]*?)\s+\.->"), r"-.->|\1|"),
             (re.compile(r"==\s+([^=|][^|]*?)\s+==>"), r"==>|\1|")]
@@ -70,6 +73,7 @@ class _Graph:
         self.group_of: Dict[str, int] = {}
         self.direction = "LR"
         self.title: Optional[str] = None
+        self.curve: Optional[str] = None
 
     def touch(self, node_id, text, cls, group):
         if node_id not in self.text:
@@ -94,11 +98,17 @@ def parse(source: str) -> _Graph:
                     k, _, v = meta.partition(":")
                     if k.strip().lower() == "title":
                         g.title = _clean(v)
+                    elif k.strip().lower() == "curve":
+                        g.curve = v.strip().strip("'\"")
                 i = j + 1
                 break
     header_seen = False
     stack: List[Optional[int]] = []
     for line_no in range(i, len(lines)):
+        if lines[line_no].lstrip().startswith("%%{"):
+            m = _CURVE.search(lines[line_no])
+            if m:
+                g.curve = m.group(1)
         raw = lines[line_no].split("%%", 1)[0].strip()
         for stmt in (s.strip() for s in raw.split(";")):
             if not stmt:
@@ -163,11 +173,17 @@ def parse(source: str) -> _Graph:
     return g
 
 
-def from_mermaid(source: str, title: Optional[str] = None, theme: Optional[Theme] = None) -> Diagram:
-    """Lay out a Mermaid flowchart as a Diagram. Call .save() or .render() on the result as usual."""
+def from_mermaid(source: str, title: Optional[str] = None, theme: Optional[Theme] = None,
+                 routing: Optional[str] = None) -> Diagram:
+    """Lay out a Mermaid flowchart as a Diagram. Call .save() or .render() on the result as usual.
+
+    routing: 'curved' or 'orthogonal' (right-angle lines). None follows the flowchart's own curve setting: step,
+    stepBefore and stepAfter mean orthogonal; anything else, or no setting, means curved."""
     g = parse(source)
     t = theme or Theme()
-    d = Diagram(title or g.title or "Flowchart", theme=t)
+    if routing is None:
+        routing = "orthogonal" if (g.curve or "").lower().startswith("step") else "curved"
+    d = Diagram(title or g.title or "Flowchart", theme=t, routing=routing)
     if not g.order:
         raise MermaidError("the flowchart has no nodes")
     across = g.direction in ("LR", "RL")

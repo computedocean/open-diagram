@@ -18,17 +18,22 @@ Build a diagram from blocks, place them, and set its colors and sizes with a the
 
 | Diagram method | What it does |
 | --- | --- |
+| `Diagram(title, subtitle=, tag=, note=, theme=, legend=, steps=, routing=)` | Start a picture. `routing="orthogonal"` draws every line as straight runs that meet at right angles; the default, `"curved"`, draws smooth curves |
 | `add(block, x, y)` | Place a block at a position |
 | `right_of(ref, block, align=)` and `below(ref, block, align=)` | Place a block next to another, with the theme's gap |
 | `columns([[...], [...]])` and `stack([...])` | Place columns left to right, each one top to bottom |
 | `ring(blocks, center=[...])` | Place blocks around a circle, with optional blocks in the middle; returns both lists |
 | `group(label, members, sub=)` | A shaded, dashed area around some blocks |
 | `enclosure(label, members, border=, sub=, pad=, fill=, stroke=, style=, tone=)` | A boundary around resources or nested enclosures; `style="panel"` adds the original sloped lid and a filled header; borders are `solid`, `dashed` or `dotted`, independent of deployment state |
-| `link(a, b, kind=, label=, start=, end=, via_x=, via_y=, dash=)` | An arrow. `kind="planned"` is dotted. `dash` optionally overrides the stroke style. `start="auto"` and `end="auto"` pick the sides that face each other. `via_y` routes it through a lane, for example above everything |
+| `link(a, b, kind=, label=, start=, end=, via_x=, via_y=, dash=, routing=)` | An arrow. `kind="planned"` is dotted. `dash` optionally overrides the stroke style. `start="auto"` and `end="auto"` pick the sides that face each other. `via_y` routes it through a lane, for example above everything. `routing` sets curved or right-angle for this line only |
 | `save(path)` | Write the SVG and PNG, print a summary, raise `LayoutError` if there are problems |
 | `render()` | Return the SVG text and a report without writing files |
 | `describe()` | Return what the picture says in plain words |
 | `set_statuses({name: state})` | Set states by panel title, id or tile label, for example from a file |
+
+## Right-angle lines
+
+`Diagram(..., routing="orthogonal")` draws every line as straight runs that meet at right angles, with slightly rounded corners. When two blocks face each other and their sides overlap, the line runs straight across. Lines that would share the same gap each get their own track, 12 px apart, ordered so they cross as little as possible. The layout checks work the same way for both kinds of line.
 
 ## Statuses, colors and sizes
 

@@ -408,6 +408,108 @@ class CommandTests(unittest.TestCase):
         self.assertIn("open.spotify.com", out)
 
 
+class RoutingTests(unittest.TestCase):
+    """routing="orthogonal": every line is made of horizontal and vertical runs."""
+
+    def assert_right_angles(self, line):
+        self.assertNotIn("C", line.d)
+        for a, b in zip(line.points, line.points[1:]):
+            self.assertTrue(abs(a[0] - b[0]) < 0.01 or abs(a[1] - b[1]) < 0.01, line.points)
+
+    def fan(self, routing="orthogonal"):
+        d = Diagram("t", routing=routing)
+        hub = d.add(Panel("Hub", ["One", "Two", "Three", "Four", "Five"]), 0, 520)
+        targets = [d.add(Panel(f"Target {i}", ["x"]), 380, i * 130) for i in range(5)]
+        sink = d.add(Panel("Sink", ["y"]), 760, 120)
+        for t in targets:
+            d.link(hub, t)
+            d.link(t, sink)
+        return d
+
+    def test_every_line_has_right_angles(self):
+        d = self.fan()
+        top = d.add(Panel("Top", ["z"]), 1100, 0)
+        d.link(d.placed[-2], top, start="right", end="bottom")     # an L shape
+        d.link(d.placed[0], top, start="bottom", end="bottom")     # around the outside
+        d.render()
+        for line in d.links:
+            self.assert_right_angles(line)
+
+    def test_facing_blocks_get_a_straight_line(self):
+        d = Diagram("t", routing="orthogonal")
+        a = d.add(Panel("Alpha", ["x", "y", "z"]))
+        b = d.right_of(a, Panel("Beta", ["w"]), align="center")
+        line = d.link(a, b)
+        self.assertEqual(d.render()[1].problems, [])
+        self.assertEqual(len(line.points), 2)
+        self.assertAlmostEqual(line.points[0][1], line.points[1][1])
+
+    def test_lines_sharing_a_gap_get_their_own_tracks_and_do_not_cross(self):
+        from open_diagram.diagram import _crossings
+        d = self.fan()
+        self.assertEqual(d.render()[1].problems, [])
+        out = [l for l in d.links if l.a.name == "Hub" and len(l.points) == 4]
+        self.assertGreaterEqual(len(out), 3)
+        self.assertEqual(len({round(l.points[1][0], 3) for l in out}), len(out))
+        self.assertEqual(sum(_crossings(p.points, q.points) for i, p in enumerate(d.links)
+                             for q in d.links[i + 1:]), 0)
+
+    def test_the_build_is_the_same_every_time(self):
+        self.assertEqual(self.fan().render()[0], self.fan().render()[0])
+
+    def test_one_link_can_differ_from_the_diagram(self):
+        d = Diagram("t")
+        a = d.add(Panel("Alpha", ["x"]))
+        b = d.add(Panel("Beta", ["y"]), 300, 120)
+        curved, square = d.link(a, b), d.link(a, b, routing="orthogonal")
+        d.render()
+        self.assertIn("C", curved.d)
+        self.assert_right_angles(square)
+
+    def test_crossings_are_still_reported(self):
+        d = Diagram("t", routing="orthogonal")
+        a = d.add(Panel("Alpha", ["x"]))
+        b = d.right_of(a, Panel("Beta", ["y"]), align="center")
+        c = d.right_of(b, Panel("Gamma", ["z"]), align="center")
+        d.link(a, c)
+        self.assertTrue(any("crosses 'Beta'" in p for p in d.render()[1].problems))
+
+    def test_unknown_routing_is_refused(self):
+        with self.assertRaises(ValueError):
+            Diagram("t", routing="zigzag")
+        d = Diagram("t")
+        a, b = d.add(Panel("A", ["x"])), d.add(Panel("B", ["y"]), 300, 0)
+        with self.assertRaises(ValueError):
+            d.link(a, b, routing="zigzag")
+
+    def test_json_routing(self):
+        spec = {"title": "t", "routing": "orthogonal",
+                "columns": [[{"id": "a", "title": "A", "tiles": ["x"]}],
+                            [{"id": "b", "title": "B", "tiles": ["y"]}, {"id": "c", "title": "C", "tiles": ["z"]}]],
+                "links": [{"from": "a", "to": "b"}, {"from": "a", "to": "c", "routing": "curved"}]}
+        d = from_spec(spec)
+        d.render()
+        self.assert_right_angles(d.links[0])
+        self.assertIn("C", d.links[1].d)
+        with self.assertRaisesRegex(SpecError, "^routing:"):
+            from_spec(dict(spec, routing="zigzag"))
+        with self.assertRaisesRegex(SpecError, r"^links\[0\]:"):
+            from_spec(dict(spec, routing="curved", links=[{"from": "a", "to": "b", "routing": "zigzag"}]))
+
+    def test_mermaid_step_curve_means_right_angles(self):
+        chart = "flowchart TD\n  A --> B & C\n"
+        self.assertEqual(from_mermaid(chart).routing, "curved")
+        self.assertEqual(from_mermaid('%%{init: {"flowchart": {"curve": "stepBefore"}}}%%\n' + chart).routing,
+                         "orthogonal")
+        self.assertEqual(from_mermaid("---\nconfig:\n  flowchart:\n    curve: step\n---\n" + chart).routing,
+                         "orthogonal")
+        self.assertEqual(from_mermaid(chart, routing="orthogonal").routing, "orthogonal")
+        d = from_mermaid('%%{init: {"flowchart": {"curve": "step"}}}%%\n' + chart)
+        self.assertEqual(d.render()[1].problems, [])
+        for line in d.links:
+            self.assert_right_angles(line)
+
+
 class ExampleTests(unittest.TestCase):
     def test_examples_build_cleanly_and_repeatably(self):
         for name in EXAMPLES:

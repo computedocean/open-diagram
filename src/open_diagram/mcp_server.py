@@ -71,7 +71,8 @@ In ring and panels layouts, links leave from the sides that face each other unle
 ## Keys
 - Top level: title (required), one layout (columns, ring with optional center and start_angle, or panels),
   subtitle, tag, note {title, lines}, steps [[number, text]], steps_label, gap, row_gap, valign, groups, links,
-  statuses {name: state}, theme.
+  statuses {name: state}, theme, routing ("orthogonal" draws every line as straight runs that meet at right angles;
+  the default is "curved").
 - Panel: title (required), id (used by links and groups; defaults to the title), sub, status, step, footer
   ("Owner: ..."; text before the colon is bold), tone (default, neutral, accent = soft yellow, dark = charcoal),
   width, x and y (panels layout only), tiles (strings or {label, sub, status}) with cols and label, or sections (each {"tiles": [...]},
@@ -79,7 +80,8 @@ In ring and panels layouts, links leave from the sides that face each other unle
   or {"row": [sections]}).
 - Link: from, to (panel ids), kind (flow = solid, planned = dotted), label, start/end (left, right, top, bottom,
   or auto: the side facing the other panel), lane (top or bottom: route around the picture), via_x / via_y, cross_ok,
-  dash (solid, dashed or dotted; optional style override independent of deployment state).
+  dash (solid, dashed or dotted; optional style override independent of deployment state), routing (curved or
+  orthogonal, for this link only).
 - Group: label, members (panel ids), sub.
 - States: live (default look), building, trial, planned, retiring. Use them only when the user cares about state.
 
@@ -95,7 +97,8 @@ resource ids as they join panels.
 ## Mermaid
 flowchart or graph, any direction; nodes with any bracket shape; chains and &; edge labels (-->|text| or
 -- text -->); dotted edges (-.->) become planned; top-level subgraphs become shaded groups; A:::building or
-class A,B planned sets a state; a front-matter title: line sets the title.
+class A,B planned sets a state; a front-matter title: line sets the title; curve: step (in front matter, or
+%%{init: {"flowchart": {"curve": "step"}}}%%) draws right-angle lines.
 
 ## Fixing problems
 - "overlap" or "px apart": raise gap or row_gap, or move panels to other columns.
@@ -105,6 +108,7 @@ class A,B planned sets a state; a front-matter title: line sets the title.
 - "needs N px": shorten the words or give the panel more width.
 - "facing away": the link leaves or enters on the wrong side; set start and end to auto, or use a lane.
 Long curved links between distant panels are hard to follow: put the two panels side by side, or use a lane.
+When the user asks for straight, square or right-angle lines, set "routing": "orthogonal" at the top level.
 Yellow: the accent tone is yellow. When any panel uses it, step numbers turn charcoal so yellow keeps one meaning;
 use accent for one kind of panel only and say what it means in a note.
 Keep panel titles to two to four words and tiles to four words or fewer. Never invent owners, numbers or states.
