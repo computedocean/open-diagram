@@ -1,6 +1,6 @@
 # AI agents
 
-Let Claude, Cursor or Codex draw diagrams and fix their layout problems.
+Let Claude Code, Claude Desktop, Cursor or Amp draw diagrams and fix their layout problems.
 
 ## MCP server
 
@@ -76,7 +76,37 @@ Tested on November 25, 2026, with skills 1.9.0 and Claude Code 2.1.332: the inst
 
 Then ask for a picture in plain words, for example: "Draw a systems map of our checkout, warehouse and reporting, with what is live and what is planned." The skill tells the agent to plan the columns, write the script, run it, fix each named problem, and look at the PNG before it answers.
 
-Agents changing the library itself should start with [AGENTS.md](https://github.com/lukendeasy/open-diagram/blob/main/AGENTS.md).
+## Tell your coding agent about open-diagram
+
+Coding agents read `AGENTS.md` (or `CLAUDE.md`) at the top of your project before they start. Paste this block into yours, so an agent that draws a diagram uses open-diagram and fixes every layout problem it names:
+
+```markdown
+## Diagrams
+
+This project draws its diagrams with open-diagram.
+
+- Install it with `pip install open-diagram`.
+- Without installing, put `uvx` in front of each command: `uvx open-diagram check FILE`.
+- FILE is `.json`, `.mmd` (Mermaid), or `.py` (a script whose `build()` returns a `Diagram`).
+
+Docs, as Markdown:
+- Format guide: https://open-diagram.dev/for-agents/format-guide.md
+- JSON: https://open-diagram.dev/docs/json.md
+- Python: https://open-diagram.dev/docs/python.md
+- Mermaid: https://open-diagram.dev/docs/mermaid.md
+- Layout problems: https://open-diagram.dev/problems.md
+- All docs in one file: https://open-diagram.dev/llms-full.txt
+
+For each diagram:
+1. Run `open-diagram check FILE`.
+2. Fix every problem it names.
+3. Run the check again. Repeat until it reports `0 layout problem(s)`.
+4. Run `open-diagram describe FILE`. Compare the text with the request.
+5. Run `open-diagram draw FILE`. It writes the SVG and PNG next to FILE.
+6. Tell the user where the SVG and PNG are.
+```
+
+Agents changing the library itself should start with this repo's own [AGENTS.md](https://github.com/lukendeasy/open-diagram/blob/main/AGENTS.md), which is a different file.
 
 ## Cloud service icons
 

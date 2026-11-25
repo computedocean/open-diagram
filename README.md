@@ -4,13 +4,13 @@ Python building blocks for dense architecture diagrams that check their own layo
 
 <!-- mcp-name: io.github.lukendeasy/open-diagram -->
 
-Website, gallery and docs: [open-diagram.dev](https://open-diagram.dev) · How it compares with Mermaid, D2, draw.io, Excalidraw and archify: [docs/comparison.md](https://github.com/lukendeasy/open-diagram/blob/main/docs/comparison.md)
+Website, gallery and docs: [open-diagram.dev](https://open-diagram.dev) · How it compares with Mermaid, D2, draw.io, Excalidraw and four other tools: [open-diagram.dev/compare.html](https://open-diagram.dev/compare.html)
 
 ![A systems map for an invented video platform, drawn with open-diagram](https://raw.githubusercontent.com/lukendeasy/open-diagram/main/docs/images/systems_map.png)
 
 You describe panels, tiles, lines and groups in a short Python script. open-diagram measures every label from the font, places the blocks, and checks the result. If two panels collide or a line runs through a panel, the build says so by name. The output is an SVG (a picture made of shapes, sharp at any size) and a PNG.
 
-The same blocks draw software systems, release pipelines, layered stacks, data models and business processes. It is built to be written by an AI agent such as Claude, Codex or Cursor, as well as by people. The checks catch layout mistakes before anyone looks at the picture, so a first attempt usually comes out clean.
+The same blocks draw software systems, release pipelines, layered stacks, data models and business processes. It is built to be written by an AI agent such as Claude Code or Cursor, as well as by people. The checks catch layout mistakes before anyone looks at the picture, so a first attempt usually comes out clean.
 
 ## Install
 
@@ -22,7 +22,7 @@ For the newest unreleased code: `pip install git+https://github.com/lukendeasy/o
 
 open-diagram needs Python 3.10 or later. pip installs the two packages it uses, fontTools and the MCP toolkit, for you. To make PNG files it also needs Google Chrome, Chromium or Microsoft Edge. If yours is not in the usual place, set the `CHROME` environment variable to its path. The SVG is always written, browser or not.
 
-For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx open-diagram mcp`. Claude Desktop, Cursor, Amp, the agent skill and the apps it has been tested with are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md).
+For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx open-diagram mcp`. Claude Desktop, Cursor, Amp, the agent skill and the apps it has been tested with are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md), with [a block to paste into your project's AGENTS.md](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md#tell-your-coding-agent-about-open-diagram) so your coding agent knows how to draw and check a diagram.
 
 ## Quick start
 
@@ -89,6 +89,8 @@ The full reference is at [open-diagram.dev/docs.html](https://open-diagram.dev/d
 | Cloud templates and the template standard | [templates/README.md](https://github.com/lukendeasy/open-diagram/blob/main/templates/README.md) |
 | What each layout problem means and how to fix it | [skills/open-diagram/SKILL.md](https://github.com/lukendeasy/open-diagram/blob/main/skills/open-diagram/SKILL.md) |
 | How it compares with Mermaid, D2, draw.io, Excalidraw and archify | [docs/comparison.md](https://github.com/lukendeasy/open-diagram/blob/main/docs/comparison.md) |
+
+The website also has [step-by-step guides](https://open-diagram.dev/guides.html), [a page for each example and template](https://open-diagram.dev/diagrams.html), [a page for each layout problem](https://open-diagram.dev/problems.html), [comparisons with eight other tools](https://open-diagram.dev/compare.html) and [pages for AI agents](https://open-diagram.dev/for-agents.html). Each page has a Markdown copy at the same address ending in `.md`.
 
 ## Contributing
 

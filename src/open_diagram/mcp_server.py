@@ -102,12 +102,18 @@ class A,B planned sets a state; a front-matter title: line sets the title; curve
 %%{init: {"flowchart": {"curve": "step"}}}%%) draws right-angle lines.
 
 ## Fixing problems
+Use the first line below whose words the message contains; the more specific lines come first.
+- "sits on the title of group": give the link another start/end side or a lane, or move the group's panels.
+- "group ... overlaps": add the panel to the group, or move it out of the group's area.
+- "groups ... overlap": move one group's panels so the two areas no longer cross, or put one group wholly inside the other.
+- "graph: the label ... touches" or "graph: the labels ... touch": spread the nodes in "at", or shorten the label.
+- "graph: the line ... runs through": move a node so the straight line between the pair is clear.
 - "overlap" or "px apart": raise gap or row_gap, or move panels to other columns.
 - "crosses": route the link with a lane, change start/end, or reorder columns.
 - "label ... sits on": shorten the label or raise gap.
-- "sits on the title of group": give the link another start/end side or a lane.
-- "needs N px": shorten the words or give the panel more width.
 - "facing away": the link leaves or enters on the wrong side; set start and end to auto, or use a lane.
+- "needs N px": shorten the words or give the panel more width.
+- "smallest text": shorten the words; never shrink text below the theme's minimum.
 Long curved links between distant panels are hard to follow: put the two panels side by side, or use a lane.
 When the user asks for straight, square or right-angle lines, set "routing": "orthogonal" at the top level.
 Yellow: the accent tone is yellow. When any panel uses it, step numbers turn charcoal so yellow keeps one meaning;

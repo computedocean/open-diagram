@@ -12,13 +12,13 @@ open-diagram turns a short description (JSON, Mermaid, or a Python script) into 
 
 - **MCP tools available** (`format_guide`, `check`, `draw`, `describe`, `template`): read `format_guide` once, write the diagram as JSON, call `check` until it reports 0 problems, then `draw` and look at the picture it returns. Skip to step 5. For a cloud picture, call `template` first and start from the closest one; `format_guide` ends with the icon names you can use.
 - **Otherwise** run `python3 -c "import open_diagram; print(open_diagram.__version__)"`. If it fails or prints below 0.5.0, run `pip install -U open-diagram`. Version 0.4.0 or later is needed for rings, free placement and `auto` sides; 0.5.0 or later for `Resource`, `d.enclosure()` and link `dash`; 0.6.0 or later for resources, enclosures and icons in JSON, and for templates. PNG output needs Chrome, Chromium or Edge; set `CHROME` to its path if it is not found. The SVG is always written.
-- **Format.** Write JSON unless the picture needs something only Python offers (a `Card`, `Graph`, `Row`, or computed positions). Given a Mermaid flowchart, run `open-diagram draw flow.mmd` directly; dotted edges become planned connections and subgraphs become groups.
+- **Format.** Write JSON unless the picture needs positions computed while the script runs, which only Python offers. JSON panels take `card`, `graph` and `row` sections too. Given a Mermaid flowchart, run `open-diagram draw flow.mmd` directly; dotted edges become planned connections and subgraphs become groups.
 
 ## 2. Plan before writing
 
 Write the plan in a few lines first. Use only facts the user gave. Never invent systems, owners, numbers or statuses; if a fact the picture needs is missing, ask, or write "Owner: Not yet named" when owner lines are wanted but no owner was named.
 
-- **Layout.** `columns` for flows, read left to right (where things come from, what handles them, who uses the result) or top to bottom for layers. `ring` for cycles, with goals or shared parts in `center`. `panels` with an `x` and `y` for any other shape.
+- **Layout.** `columns` for flows, read left to right (where things come from, what handles them, who uses the result) or top to bottom for layers (in JSON, one column holding every layer: `"columns": [[top, ..., bottom]]`). `ring` for cycles, with goals or shared parts in `center`. `panels` with an `x` and `y` for any other shape.
 - **Columns.** Three to six columns, each holding one to three panels. Avoid long lines between distant panels: place the two side by side, or route through a lane.
 - **Panels.** One panel per system or team, titled in two to four words. Add a `sub` line only when it adds a fact.
 - **Tiles.** Up to about nine per panel, labels of four words or fewer. Put detail in `sub`.
@@ -39,7 +39,7 @@ Write the plan in a few lines first. Use only facts the user gave. Never invent 
            {"from": "web", "to": "ops", "lane": "top", "kind": "planned", "label": "direct"}]}
 ```
 
-Top-level keys: `title` (required); one layout of `columns`, `ring` (with optional `center`, `start_angle`) or `panels`; plus `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`, `routing` (`curved` or `orthogonal`). Panel keys: `title` (required), `id`, `sub`, `status`, `step`, `footer`, `tone`, `width`, `x`/`y` (in `panels` only), `tiles` with `cols` and `label`, or `sections`. Link keys: `from`, `to`, `kind`, `label`, `start`, `end` (a side or `auto`), `lane`, `via_x`, `via_y`, `cross_ok`, `dash` (`solid`, `dashed` or `dotted`), `routing`.
+Top-level keys: `title` (required); one layout of `columns`, `ring` (with optional `center`, `start_angle`) or `panels`; plus `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`, `routing` (`curved` or `orthogonal`), `legend` (`false` hides the key). The key says "Live" for parts with no state and "Data flows today" for solid lines; for a process, a cycle or a stack, set `"legend": false`, or name each line kind in `"theme": {"link_labels": {"flow": "..."}}` (this replaces the default names, so list every kind the picture uses). Panel keys: `title` (required), `id`, `sub`, `status`, `step`, `footer`, `tone`, `width`, `x`/`y` (in `panels` only), `tiles` with `cols` and `label`, or `sections`. Link keys: `from`, `to`, `kind`, `label`, `start`, `end` (a side or `auto`), `lane`, `via_x`, `via_y`, `cross_ok`, `dash` (`solid`, `dashed` or `dotted`), `routing`.
 
 **Python** (keep all words in lists at the top; build in a `build()` that returns the `Diagram`):
 
@@ -99,17 +99,19 @@ Other blocks: `Card(title, [(name, value), ...], intro=)` for a worked example; 
 
 ## 4. Run it and fix every named problem
 
-Run `open-diagram check FILE` (works for `.json`, `.mmd` and `.py`) or run the script; `save()` writes the files, prints a summary, then raises `LayoutError` listing every problem. Fix them all and run again until it says `0 layout problem(s)`.
+Run `open-diagram check FILE` (works for `.json`, `.mmd` and `.py`) or run the script; `save()` writes the files, prints a summary, then raises `LayoutError` listing every problem. Fix them all and run again until it says `0 layout problem(s)`. Use the first row whose words the message contains; the more specific rows come first.
 
 | Message contains | Fix |
 | --- | --- |
+| `sits on the title of group` | Give the line a different start or end side, route it through a lane, or move the group's blocks |
+| `group ... overlaps` | Add the block to the group, or move it out of the group's area |
+| `groups ... overlap` | Move one group's blocks so the two shaded areas no longer cross, or put one group wholly inside the other |
+| `graph: the label ... touches` | Spread the nodes in `at`, or shorten the label |
+| `graph: the labels ... touch` | Spread the nodes in `at`, or shorten one of the labels |
 | `overlap` or `px apart` | Move one block, raise `gap` or `row_gap`, or place it with `right_of()` / `below()` |
 | `crosses` | Route the line through a lane (`lane`, `via_y` or `via_x`), change `start` and `end` sides, or move a block. Use `cross_ok` only when the line should pass behind |
 | `label ... sits on` | Shorten the label, or widen the gap between the two columns |
 | `facing away` | Use `start="auto", end="auto"`, choose other sides, or route the line through a lane |
-| `sits on the title of group` | Give the line a different start or end side, route it through a lane, or move the group's blocks |
-| `group ... overlaps` | Add the block to the group, or move it out of the group's area |
-| `graph: the label ... touches` | Spread the nodes in `at`, or shorten the label |
 | `graph: the line ... runs through` | Move a node so the straight line between the pair is clear |
 | `needs N px` | Give the block more width, or shorten the words |
 | `smallest text` | Do not shrink text below the theme minimum; shorten the words instead |

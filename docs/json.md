@@ -19,7 +19,7 @@ A small example:
 
 | Part | Keys |
 | --- | --- |
-| Top level | `title` (required); one layout: `columns` (a list of columns, each a list of panels), `ring` (panels around a circle, with optional `center` and `start_angle`) or `panels` (each with `x` and `y`), or `resources` (alone or with `panels`); `enclosures`; `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`, `routing` (`curved`, the default, or `orthogonal`: straight runs that meet at right angles) |
+| Top level | `title` (required); one layout: `columns` (a list of columns, each a list of panels), `ring` (panels around a circle, with optional `center` and `start_angle`) or `panels` (each with `x` and `y`), or `resources` (alone or with `panels`); `enclosures`; `subtitle`, `tag`, `note` (`title`, `lines`), `steps` (`[[1, "First"]]`), `steps_label`, `gap`, `row_gap`, `valign`, `groups`, `links`, `statuses`, `theme`, `routing` (`curved`, the default, or `orthogonal`: straight runs that meet at right angles), `legend` (`false` hides the key) |
 | Panel | `title` (required), `id`, `sub`, `status`, `step`, `footer`, `tone`, `width`, `x` and `y` (in `panels` only), `tiles` with `cols` and `label`, or `sections` (each `{"tiles": [...]}`, `{"text": "..."}`, `{"card": {...}}`, `{"graph": {...}}` or `{"row": [...]}`) |
 | Tile | a string, or `{"label", "sub", "status", "icon"}` |
 | Resource | a large icon with its label under it: `label`, `x` and `y` (required), `id`, `sub` (the service name), `icon`, `icon_size`, `max_width`, `border` |

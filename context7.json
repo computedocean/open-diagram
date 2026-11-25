@@ -1,0 +1,21 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "open-diagram",
+  "description": "Python building blocks for dense architecture diagrams that check their own layout. Draws from Python, JSON or Mermaid to SVG and PNG, and names every layout problem in plain words. Includes a command line, a GitHub Action and an MCP server.",
+  "folders": [
+    "docs",
+    "templates",
+    "skills"
+  ],
+  "excludeFolders": [
+    "docs/images",
+    "docs/compare",
+    "templates/assets"
+  ],
+  "rules": [
+    "Run open-diagram check on the file and fix every layout problem it names, until it reports 0 layout problem(s).",
+    "Run open-diagram describe and compare its text with the request before drawing.",
+    "The MCP server accepts JSON and Mermaid only, never Python.",
+    "Do not shrink text below the theme minimum; shorten the words or widen the panel instead."
+  ]
+}

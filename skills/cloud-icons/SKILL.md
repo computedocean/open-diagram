@@ -42,8 +42,10 @@ Use spacing and labels to unify a multi-cloud picture.
 
 ## Download first, then embed local files
 
-`Resource(icon=...)` and `Tile(icon=...)` accept local PNG or SVG paths, not HTTP URLs. The Python API is the icon workflow: JSON tile
-specs, Mermaid input and MCP tools do not accept an icon field. Keep using those formats for diagrams without icons.
+`Resource(icon=...)` and `Tile(icon=...)` accept local PNG or SVG paths, not HTTP URLs. JSON tiles and resources, and the MCP tools,
+take an icon by name instead (`"icon": "aws/s3"`), from the built-in icon folder or a folder passed with `--icons`; from the command
+line, JSON also looks in the JSON file's own folder. To use a downloaded icon there, put the file in one of those folders. Mermaid
+input takes no icons.
 
 The mapping files stay in the repository even when the skill is copied to an agent's skills folder. Neither the
 skill nor the mappings are bundled in the Python package. In the example below, run from the repository root;

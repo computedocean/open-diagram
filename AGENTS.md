@@ -77,8 +77,8 @@ needs a browser. CI (`.github/workflows/test.yml`) runs the tests on Linux and W
   `newline="\n"` so Windows does not change line endings, and compare files as bytes in tests.
 - **Problem messages are an API.** Agents act on them. Each message names parts by their labels and, where
   possible, says how to fix it. Keep these substrings stable: `overlap`, `px apart`, `crosses`, `sits on`,
-  `needs N px`, `smallest text`, `group ... overlaps`, `sits on the title of group`, `facing away`, `graph: the label ... touches`,
-  `graph: the line ... runs through`. If you add or change one, update the fix table in `skills/open-diagram/SKILL.md`.
+  `needs N px`, `smallest text`, `group ... overlaps`, `groups ... overlap`, `sits on the title of group`, `facing away`,
+  `graph: the label ... touches`, `graph: the labels ... touch`, `graph: the line ... runs through`. If you add or change one, update the fix table in `skills/open-diagram/SKILL.md`.
 - **Existing layouts must not move.** New shapes and options are opt-in (`ring`, `panels`, `start="auto"`,
   `routing="orthogonal"`); the
   `columns` layout and explicit sides behave exactly as before, and every committed picture must stay byte-identical
