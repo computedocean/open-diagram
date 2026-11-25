@@ -27,6 +27,12 @@ claude mcp add open-diagram -- uvx open-diagram mcp
 }
 ```
 
+**Amp**
+
+```bash
+amp mcp add open-diagram -- uvx open-diagram mcp
+```
+
 Without uv: `pip install open-diagram`, then use `open-diagram` as the command and `mcp` as its first argument. Setups made before 0.6.2 with `--from "open-diagram[mcp]" open-diagram-mcp` keep working. uv keeps a copy of what it downloaded; to pick up a new release, add `--refresh` once after `uvx`.
 
 | Action | What the AI gets |
@@ -39,13 +45,34 @@ Without uv: `pip install open-diagram`, then use `open-diagram` as the command a
 
 Icons come only from the built-in icons and from folders you name with `--icons` (or the `OPEN_DIAGRAM_ICONS` environment variable), never from a path the AI writes. Files go to `--out`, else the `OPEN_DIAGRAM_OUT` environment variable, else an `open-diagram` folder where the app starts the server (or in your home folder if that one cannot be written).
 
+### Tested with
+
+Tested on November 25, 2026, with open-diagram 0.6.2 on macOS, using the setup lines above.
+
+| App | Version | What was checked |
+| --- | --- | --- |
+| Claude Code | 2.1.332 | Claude called `format_guide`, `check` and `draw`; the SVG and PNG were written with 0 layout problems |
+| Claude Desktop | 6.28899.6 | The app found `uvx`, started the server and received its list of actions |
+| Cursor | 3.32.4 | Cursor connected and listed all 5 actions |
+| Amp | 0.0.1788357228 | Amp connected and listed all 5 actions |
+
+In Amp, a server added to one folder's settings (`amp mcp add --workspace`) also needs `amp mcp approve open-diagram`.
+
 ## Agent skill
 
-The folder [`skills/open-diagram/`](https://github.com/lukendeasy/open-diagram/tree/main/skills/open-diagram) is an Agent Skill: instructions an agent loads when it needs them. For Claude Code, copy it into your skills folder:
+The folder [`skills/open-diagram/`](https://github.com/lukendeasy/open-diagram/tree/main/skills/open-diagram) is an Agent Skill: instructions an agent loads when it needs them. Install it with the [skills](https://skills.sh) tool, without cloning this repo:
+
+```bash
+npx skills add lukendeasy/open-diagram --skill open-diagram --agent claude-code
+```
+
+That puts it in `.claude/skills/` in the current folder. Add `-g` to install it for all your projects, or name another app after `--agent`. In a copy of this repo you can also copy the folder yourself:
 
 ```bash
 cp -r skills/open-diagram ~/.claude/skills/
 ```
+
+Tested on November 25, 2026, with skills 1.9.0 and Claude Code 2.1.332: the installed file matched this repo's, and Claude Code loaded it from the folder the tool wrote.
 
 Then ask for a picture in plain words, for example: "Draw a systems map of our checkout, warehouse and reporting, with what is live and what is planned." The skill tells the agent to plan the columns, write the script, run it, fix each named problem, and look at the PNG before it answers.
 

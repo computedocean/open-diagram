@@ -136,7 +136,8 @@ including nested containers. Keep section headings clear of connections in the t
 1. Set the same version in `pyproject.toml`, `src/open_diagram/__init__.py` (`__version__`) and both `version`
    fields in `server.json` (`tests/test_release.py` checks), and update the `lukendeasy/open-diagram@vX.Y.Z` line in
    the GitHub Action example in `docs/cli.md`.
-2. Make sure tests pass and every picture is rebuilt.
+2. Make sure tests pass and every picture is rebuilt. If the MCP server or a setup line changed, test the apps in
+   the "Tested with" table in `docs/agents.md` again and update the table.
 3. Publish a GitHub release tagged `vX.Y.Z`. `.github/workflows/publish.yml` builds the package and uploads it to
    PyPI through trusted publishing (no token), then its `registry` job lists the version in the MCP Registry from
    `server.json`, signed in through GitHub (no token). The registry checks the `mcp-name` line in the README that

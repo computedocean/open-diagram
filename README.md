@@ -22,7 +22,7 @@ For the newest unreleased code: `pip install git+https://github.com/lukendeasy/o
 
 open-diagram needs Python 3.10 or later. pip installs the two packages it uses, fontTools and the MCP toolkit, for you. To make PNG files it also needs Google Chrome, Chromium or Microsoft Edge. If yours is not in the usual place, set the `CHROME` environment variable to its path. The SVG is always written, browser or not.
 
-For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx open-diagram mcp`. Claude Desktop, Cursor and the agent skill are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md).
+For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx open-diagram mcp`. Claude Desktop, Cursor, Amp, the agent skill and the apps it has been tested with are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md).
 
 ## Quick start
 
