@@ -1,6 +1,7 @@
 ---
 name: cloud-icons
 description: Select consistent AWS, Azure, and Google Cloud service icons from pinned SVG links and embed them in open-diagram architecture, deployment, network, and data-flow diagrams.
+license: MIT
 ---
 
 # Cloud icons

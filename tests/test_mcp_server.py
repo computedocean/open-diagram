@@ -1,5 +1,5 @@
 """The MCP server. The helpers are tested everywhere; the MCP tests run when the MCP toolkit is installed
-(Python 3.10 or later with `pip install "open-diagram[mcp]"`)."""
+(it is part of the main install since 0.6.2)."""
 import asyncio
 import os
 import sys
@@ -25,6 +25,17 @@ GUIDE_EXAMPLE = mcp_server.GUIDE[mcp_server.GUIDE.index("{"): mcp_server.GUIDE.i
 
 
 class HelperTests(unittest.TestCase):
+    def test_open_diagram_mcp_starts_the_server(self):
+        # `uvx open-diagram mcp` is the command the MCP Registry gives apps; it must reach the server's own options.
+        import contextlib
+        import io
+        from open_diagram import cli
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), self.assertRaises(SystemExit):
+            cli.main(["mcp", "--help"])
+        self.assertIn("usage: open-diagram mcp", out.getvalue())
+        self.assertIn("--out", out.getvalue())
+
     def test_guide_example_is_clean(self):
         _, report = mcp_server.build(GUIDE_EXAMPLE).render()
         self.assertEqual(report.problems, [])

@@ -1,5 +1,5 @@
 """open-diagram: building blocks for dense architecture diagrams that check their own layout."""
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 from .blocks import Block, Card, Graph, Note, Panel, Resource, Row, Text, Tile, Tiles  # noqa: E402
 from .diagram import Diagram, LayoutError, Link, Placed, Report  # noqa: E402

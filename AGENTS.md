@@ -36,10 +36,12 @@ needs a browser. CI (`.github/workflows/test.yml`) runs the tests on Linux and W
 | `src/open_diagram/describe.py` | `describe(diagram)`: the plain-text description behind `Diagram.describe()` and the SVG `<desc>` |
 | `src/open_diagram/spec.py` | `from_spec(dict)` / `load_spec(path)`: JSON descriptions; `SpecError` names the place of every mistake |
 | `src/open_diagram/mermaid.py` | `parse()` and `from_mermaid(text)`: Mermaid flowchart subset (listed in the module docstring) and its layered, banded layout |
-| `src/open_diagram/cli.py` | The `open-diagram` command (`draw`, `check`, `describe`, `png`, `new`) and `load(path)` for .json, .mmd and .py |
+| `src/open_diagram/cli.py` | The `open-diagram` command (`draw`, `check`, `describe`, `png`, `new`, `mcp`) and `load(path)` for .json, .mmd and .py |
 | `src/open_diagram/catalog.py` | Where templates and icons live (`template_dir()`, `icon_dir()`), the template table read from `templates/README.md`, and `find_icon()`, which never returns a file outside the icon folders |
-| `src/open_diagram/mcp_server.py` | The MCP server (`open-diagram-mcp`): tools `format_guide`, `check`, `draw`, `describe`, `template`; the MCP toolkit is imported only inside `create_server()` |
-| `tests/test_mcp_server.py` | Helper tests (any Python) and protocol tests over memory and stdio (skipped without the `mcp` extra) |
+| `src/open_diagram/mcp_server.py` | The MCP server (`open-diagram mcp`, also `open-diagram-mcp`): tools `format_guide`, `check`, `draw`, `describe`, `template`; the MCP toolkit is imported only inside `create_server()` |
+| `tests/test_mcp_server.py` | Helper tests (any Python) and protocol tests over memory and stdio (skipped when the MCP toolkit is missing) |
+| `tests/test_release.py` | `pyproject.toml`, `__version__` and `server.json` name one version; the README carries the registry's `mcp-name` line |
+| `server.json` | The MCP Registry listing (`io.github.lukendeasy/open-diagram`): apps run `uvx open-diagram mcp` |
 | `src/open_diagram/render.py` | `find_chrome()`, `svg_to_png()` and `png_error()` (headless browser screenshot into a temporary file, optional Pillow crop; a failed run leaves an existing PNG alone and says why) |
 | `src/open_diagram/fonts/` | Inter 4.1, four weights, under the SIL OFL (`OFL.txt`). Do not replace or subset without updating the license note |
 | `examples/` | One script per example; each defines `build() -> Diagram` and saves to `docs/images/<name>` |
@@ -85,9 +87,10 @@ needs a browser. CI (`.github/workflows/test.yml`) runs the tests on Linux and W
   hard-code hex values in blocks or the diagram code. Header text color is chosen by contrast in
   `Theme.header_colors()`; keep tones usable with either light or dark headers.
 - **Minimum text size.** Nothing is drawn below `theme.min_text` (10 px); `Report.min_text` tracks the smallest.
-- **Python 3.9+.** Modules use `from __future__ import annotations`. No `match`, no runtime `X | Y` unions, no
-  3.10+ standard-library APIs.
-- **Dependencies.** Runtime depends on `fonttools` only; Pillow is optional (the `png` extra). Do not add others.
+- **Python 3.10+** (since 0.6.2, when the MCP toolkit joined the main install). Modules use
+  `from __future__ import annotations`.
+- **Dependencies.** Runtime depends on `fonttools` and `mcp` only; Pillow is optional (the `png` extra). Do not add
+  others. The `mcp` extra is kept empty so install lines from before 0.6.2 still work.
 - **Public API** is `__all__` in `src/open_diagram/__init__.py`. Changing it means updating the tables in `docs/python.md`.
 - **JSON and Mermaid errors name the place** (`columns[1][0].tiles[2]`, `line 7`). Keep that when adding keys or syntax,
   and keep the key table in `docs/json.md` in step with `spec.py`.
@@ -96,8 +99,8 @@ needs a browser. CI (`.github/workflows/test.yml`) runs the tests on Linux and W
 - **MCP server rules.** Never print to stdout (it carries the protocol; wrap work in `redirect_stdout(sys.stderr)`
   and never call `Diagram.save()`, which prints). Accept JSON and Mermaid only, never Python. Write only inside the
   output folder (`safe_name()`). Read icons only from the built-in folder and `--icons` folders
-  (`catalog.find_icon()`), never from a path in the diagram text. Keep the `GUIDE` example clean (a test draws it). The MCP toolkit stays an optional
-  extra (`mcp`, Python 3.10+); the core keeps Python 3.9 and fontTools only.
+  (`catalog.find_icon()`), never from a path in the diagram text. Keep the `GUIDE` example clean (a test draws it). The MCP toolkit is still imported
+  only inside `create_server()`, so `import open_diagram` stays fast.
 - **Easter egg:** `open-diagram --soundtrack` prints The Gathering Field's Spotify link and is hidden from `--help`.
   Keep it, and keep it hidden.
 
@@ -130,12 +133,14 @@ including nested containers. Keep section headings clear of connections in the t
 
 ## Releasing
 
-1. Set the same version in `pyproject.toml` and `src/open_diagram/__init__.py` (`__version__`), and update the
-   `lukendeasy/open-diagram@vX.Y.Z` line in the GitHub Action example in `docs/cli.md`.
+1. Set the same version in `pyproject.toml`, `src/open_diagram/__init__.py` (`__version__`) and both `version`
+   fields in `server.json` (`tests/test_release.py` checks), and update the `lukendeasy/open-diagram@vX.Y.Z` line in
+   the GitHub Action example in `docs/cli.md`.
 2. Make sure tests pass and every picture is rebuilt.
 3. Publish a GitHub release tagged `vX.Y.Z`. `.github/workflows/publish.yml` builds the package and uploads it to
-   PyPI through trusted publishing (no token). PyPI never accepts the same version twice; fix forward with a new
-   patch version.
+   PyPI through trusted publishing (no token), then its `registry` job lists the version in the MCP Registry from
+   `server.json`, signed in through GitHub (no token). The registry checks the `mcp-name` line in the README that
+   PyPI shows, so keep that line. PyPI never accepts the same version twice; fix forward with a new patch version.
 
 ## Done means
 

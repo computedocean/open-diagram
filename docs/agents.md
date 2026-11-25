@@ -11,7 +11,7 @@ The commands below use [uv](https://docs.astral.sh/uv/), which fetches open-diag
 **Claude Code**
 
 ```bash
-claude mcp add open-diagram -- uvx --python 3.12 --from "open-diagram[mcp]" open-diagram-mcp
+claude mcp add open-diagram -- uvx open-diagram mcp
 ```
 
 **Claude Desktop** (`claude_desktop_config.json`) **or Cursor** (`~/.cursor/mcp.json`)
@@ -21,14 +21,13 @@ claude mcp add open-diagram -- uvx --python 3.12 --from "open-diagram[mcp]" open
   "mcpServers": {
     "open-diagram": {
       "command": "uvx",
-      "args": ["--python", "3.12", "--from", "open-diagram[mcp]", "open-diagram-mcp",
-               "--out", "/Users/you/Documents/open-diagram"]
+      "args": ["open-diagram", "mcp", "--out", "/Users/you/Documents/open-diagram"]
     }
   }
 }
 ```
 
-Without uv: `pip install "open-diagram[mcp]"`, then use `open-diagram-mcp` as the command. uv keeps a copy of what it downloaded; to pick up a new release, add `--refresh` once after `uvx`.
+Without uv: `pip install open-diagram`, then use `open-diagram` as the command and `mcp` as its first argument. Setups made before 0.6.2 with `--from "open-diagram[mcp]" open-diagram-mcp` keep working. uv keeps a copy of what it downloaded; to pick up a new release, add `--refresh` once after `uvx`.
 
 | Action | What the AI gets |
 | --- | --- |

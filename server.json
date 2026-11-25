@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.lukendeasy/open-diagram",
+  "title": "open-diagram",
+  "description": "Architecture diagrams from JSON or Mermaid that check their own layout and name each problem.",
+  "websiteUrl": "https://open-diagram.dev",
+  "repository": {
+    "url": "https://github.com/lukendeasy/open-diagram",
+    "source": "github"
+  },
+  "version": "0.6.2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "open-diagram",
+      "version": "0.6.2",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp",
+          "description": "Starts open-diagram as an MCP server"
+        },
+        {
+          "type": "named",
+          "name": "--out",
+          "description": "Folder where diagrams are saved (default: ./open-diagram)",
+          "format": "filepath",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

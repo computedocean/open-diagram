@@ -2,6 +2,8 @@
 
 Python building blocks for dense architecture diagrams that check their own layout.
 
+<!-- mcp-name: io.github.lukendeasy/open-diagram -->
+
 Website, gallery and docs: [open-diagram.dev](https://open-diagram.dev) · How it compares with Mermaid, D2, draw.io, Excalidraw and archify: [docs/comparison.md](https://github.com/lukendeasy/open-diagram/blob/main/docs/comparison.md)
 
 ![A systems map for an invented video platform, drawn with open-diagram](https://raw.githubusercontent.com/lukendeasy/open-diagram/main/docs/images/systems_map.png)
@@ -18,9 +20,9 @@ pip install open-diagram
 
 For the newest unreleased code: `pip install git+https://github.com/lukendeasy/open-diagram`.
 
-open-diagram needs Python 3.9 or later and fontTools, which pip installs for you. To make PNG files it also needs Google Chrome, Chromium or Microsoft Edge. If yours is not in the usual place, set the `CHROME` environment variable to its path. The SVG is always written, browser or not.
+open-diagram needs Python 3.10 or later. pip installs the two packages it uses, fontTools and the MCP toolkit, for you. To make PNG files it also needs Google Chrome, Chromium or Microsoft Edge. If yours is not in the usual place, set the `CHROME` environment variable to its path. The SVG is always written, browser or not.
 
-For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx --python 3.12 --from "open-diagram[mcp]" open-diagram-mcp`. Claude Desktop, Cursor and the agent skill are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md).
+For AI apps that use MCP, such as Claude Code: `claude mcp add open-diagram -- uvx open-diagram mcp`. Claude Desktop, Cursor and the agent skill are in [AI agents](https://github.com/lukendeasy/open-diagram/blob/main/docs/agents.md).
 
 ## Quick start
 

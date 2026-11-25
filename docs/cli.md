@@ -7,6 +7,7 @@ open-diagram draw plan.json       # writes plan.svg and plan.png; exits with 1 i
 open-diagram check docs/*.json    # checks without writing files, for scripts and CI
 open-diagram describe plan.json   # prints what the picture says, in plain words
 open-diagram new                  # lists the templates; `open-diagram new azure_web_app` writes one to start from
+open-diagram mcp                  # runs as an MCP server for AI apps; see docs/agents.md
 ```
 
 Each command takes a JSON description (`.json`), a Mermaid flowchart (`.mmd` or `.mermaid`), or a Python script with a `build()` function that returns a `Diagram` (`.py`). Add `--statuses states.json` to set states by name before drawing, and `--icons FOLDER` to use your own icons in JSON.
@@ -24,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: lukendeasy/open-diagram@v0.6.1
+      - uses: lukendeasy/open-diagram@v0.6.2
         with:
           files: docs/diagrams/*.json docs/diagrams/*.mmd
           statuses: docs/diagrams/states.json   # optional

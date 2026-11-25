@@ -5,9 +5,10 @@ It runs on the user's own computer, started by the app over stdio; nothing is se
 descriptions and Mermaid flowcharts only (never Python, so a connected agent cannot run code), and it writes files
 only inside one output folder.
 
-    pip install "open-diagram[mcp]"        # needs Python 3.10 or later
-    open-diagram-mcp [--out FOLDER] [--icons FOLDER]
+    pip install open-diagram
+    open-diagram mcp [--out FOLDER] [--icons FOLDER]
                                            # the app runs this; FOLDER defaults to $OPEN_DIAGRAM_OUT or ./open-diagram
+                                           # `open-diagram-mcp` is the same command under its older name
 
 Icons are read only from the built-in icon folder and from --icons folders ($OPEN_DIAGRAM_ICONS, separated by the
 system's path separator), never from a path an agent writes.
@@ -205,7 +206,7 @@ def create_server(out_dir: str, icons=None):
     from mcp.types import ToolAnnotations
 
     server = MCPServer("open-diagram", version=__version__, instructions=INSTRUCTIONS,
-                       website_url="https://github.com/lukendeasy/open-diagram")
+                       website_url="https://open-diagram.dev")
     read_only = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
 
     def fail(e):
@@ -267,8 +268,8 @@ def create_server(out_dir: str, icons=None):
     return server
 
 
-def main(argv=None) -> None:
-    ap = argparse.ArgumentParser(prog="open-diagram-mcp",
+def main(argv=None, prog: str = "open-diagram-mcp") -> None:
+    ap = argparse.ArgumentParser(prog=prog,
                                  description="Run open-diagram as an MCP server over stdio (started by an MCP app).")
     ap.add_argument("--out", help="folder for SVG and PNG files (default: $OPEN_DIAGRAM_OUT, else ./open-diagram)")
     ap.add_argument("--icons", action="append", metavar="FOLDER",
@@ -282,8 +283,8 @@ def main(argv=None) -> None:
     try:
         server = create_server(out, icons)
     except ImportError:
-        sys.stderr.write('open-diagram-mcp needs the MCP toolkit: pip install "open-diagram[mcp]" '
-                         "(Python 3.10 or later)\n")
+        sys.stderr.write("the MCP toolkit that open-diagram installs is missing or broken; reinstall it with: "
+                         "pip install --force-reinstall open-diagram\n")
         sys.exit(1)
     server.run("stdio")
 

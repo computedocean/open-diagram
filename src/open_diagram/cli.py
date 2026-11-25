@@ -113,6 +113,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 0
     if argv and argv[0].lower().endswith(".svg"):          # older form: python -m open_diagram picture.svg
         argv = ["png"] + argv
+    if argv and argv[0] == "mcp":                          # the MCP server reads its own options and owns stdout
+        from .mcp_server import main as mcp_main
+        mcp_main(argv[1:], prog="open-diagram mcp")
+        return 0
 
     ap = argparse.ArgumentParser(prog="open-diagram", description="Draw and check diagrams that check their own layout.")
     ap.add_argument("--version", action="version", version=f"open-diagram {__version__}")
@@ -142,6 +146,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     p = sub.add_parser("png", help="convert an SVG to PNG with Chrome, Chromium or Edge")
     p.add_argument("svg")
     p.add_argument("--scale", type=float, default=2.0)
+
+    sub.add_parser("mcp", help="run as an MCP server over stdio, started by an AI app such as Claude Code "
+                               "(options: --out FOLDER, --icons FOLDER)")
 
     p = sub.add_parser("new", help="list the templates, or write one to start from")
     p.add_argument("template", nargs="?", help="template name; leave out to list them")
